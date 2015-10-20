@@ -1,6 +1,7 @@
 // YOUR CODE HERE:
 var app = {
-  allMessages: []
+  allMessages: [],
+  friends: []
 };
 var rooms = {};
 app.init = function(){
@@ -8,8 +9,21 @@ app.init = function(){
   $("#send").on('submit', function(){
     app.handleSubmit();
   });
-};
 
+  // $(".username").on('click', function () {
+  //   console.log(this);
+  // })
+
+
+};
+var entityMap = {
+   "&": "&amp;",
+   "<": "&lt;",
+   ">": "&gt;",
+   '"': '&quot;',
+   "'": '&#39;',
+   "/": '&#x2F;'
+ };
 
 app.send = function(message){
   $.ajax({
@@ -44,6 +58,10 @@ app.fetch = function(message){
         $('#roomSelect').append('<option value =' + item.roomname + '>' + item.roomname + '</option>');
       }
     });
+    $('.chat').on('click', function(){
+      var that = this.getAttribute("data-user");
+      app.addFriend(that);
+    });
   },
   error: function (data) {
     // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -57,7 +75,6 @@ app.clearMessages = function(){
 };
 
 app.addMessage = function(messageObj){
-  console.log(messageObj)
   var userName = (messageObj.username);
   if(messageObj.text === undefined) {
     return;
@@ -67,10 +84,13 @@ app.addMessage = function(messageObj){
   var userElem = $('<span class = "username">' + userName + '</span>' + '</br>');
   var messageElem = $('<span>' + message + '</span>');
   var completeMessage = $('<div class = "chat">' +'</div>');
+  completeMessage.attr('data-user', userName);
+  completeMessage.attr('data-room', messageObj.roomname);
+
   $('#chats').append(completeMessage);
   completeMessage.append(userElem);
   completeMessage.append(messageElem);
-  $('.userName').on('click', this.addFriend());
+  // $('.username').on('click', app.addFriend());
 };
 
 app.addRoom = function(roomName){
@@ -91,8 +111,20 @@ $( "#roomSelect" ).change(function() {
     app.addMessage(item);
   });
 });
-app.addFriend = function(userName) {
 
+app.addFriend = function(userName) {
+  app.friends.push(userName);
+  console.log(app.friends)
+  console.log($('.chats').children())
+  var chatNodes = $('#chats').children();
+  for(var i = 0; i < chatNodes.length; i++) {
+    console.log(chatNodes[i])
+    if(chatNodes[i].getAttribute("data-user") === userName) {
+      $(chatNodes[i]).addClass('friends')
+    }
+  }
+  // app.clearMessages();
+  //app.fetch();
 };
 
 app.handleSubmit = function () {
@@ -103,58 +135,14 @@ app.handleSubmit = function () {
   app.send(msg);
 };
 
-app.checkMessages = function (text) {
- // <, >, ", ', `, , !, @, $, %, (, ), =, +, {, }, [, and ]
-  // console.log(text)
-  // var result = text;
-  // if(result === undefined){
-  //   console.log(arguments[1]);
-  //   debugger;
-  // }
-
-  // result = result.replace(/\</, "\*");
-  // result = result.replace(/\>/, "\*");
-  // result = result.replace(/\"/, "\*");
-  // result = result.replace(/\'/, "\*");
-  // result = result.replace(/\`/, "\*");
-  // result = result.replace(/\,/, "\*");
-  // result = result.replace(/\!/, "\*");
-  // result = result.replace(/@/, "\*");
-  // result = result.replace(/\$/, "\*");
-  // result = result.replace(/\%/, "\*");
-  // result = result.replace(/\(/, "\*");
-  // result = result.replace(/\)/, "\*");
-  // result = result.replace(/\=/, "\*");
-  // result = result.replace(/\+/, "\*");
-  // result = result.replace(/\{/, "\*");
-  // result = result.replace(/\}/, "\*");
-  // result = result.replace(/\[/, "\*");
-  // result = result.replace(/\]/, "\*");
-  // result = result.replace(/\&/, "\*");
-
-
-return text.replace(/[&<"']/g, function(m) {
-  console.log(m)
-    switch (m) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '"':
-        return '&quot;';
-      default:
-        return '&#039;';
-    }
-  });
-
-
-
-
-  return result;
-}
+app.checkMessages = function (string) {
+   return String(string).replace(/[&<>"'\/]/g, function (s) {
+     return entityMap[s];
+   });
+ }
 
 app.init();
-setTimeout(app.fetch(),5000);
+// setInterval(function () { $('#chats').empty() ; app.fetch()},10000);
 
 
 
