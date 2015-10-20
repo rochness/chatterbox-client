@@ -1,8 +1,11 @@
 // YOUR CODE HERE:
 var app = {};
-
+var rooms = {};
 app.init = function(){
-  $("#send").on('submit', this.handleSubmit());
+  // $("#send").on('submit', this.handleSubmit());
+  $("#send").on('submit', function(){
+    app.handleSubmit();
+  });
 };
 
 app.send = function(message){
@@ -12,10 +15,10 @@ app.send = function(message){
   type: 'POST',
   data: JSON.stringify(message),
   contentType: 'application/json',
-  success: function (data) {
+  success: function () {
     console.log('chatterbox: Message sent');
   },
-  error: function (data) {
+  error: function () {
     // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
     console.error('chatterbox: Failed to send message');
   }
@@ -30,10 +33,13 @@ app.fetch = function(message){
   data: JSON.stringify(message),
   contentType: 'application/json',
   success: function (data) {
-    for(var i = 0; i < 10; i++) {
-      app.addMessage(data.results[i]);
-    }
-    console.log(data);
+    _.each(data.results, function (item) {
+      app.addMessage(item);
+      if(!rooms.hasOwnProperty(item.roomname)) {
+        rooms[item.roomname] = item.roomname;
+        $('#roomSelect').append('<option value =' + item.roomname + '>' + item.roomname + '</option>');
+      }
+    });
   },
   error: function (data) {
     // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -47,9 +53,13 @@ app.clearMessages = function(){
 };
 
 app.addMessage = function(messageObj){
-  var userName = messageObj.username;
-  // var text = app.checkMessages(messageObj.text)
-  var message = messageObj.text.toString();
+  console.log(messageObj)
+  var userName = (messageObj.username);
+  if(messageObj.text === undefined) {
+    return;
+  }
+  var text = app.checkMessages(messageObj.text)
+  var message = text;
   var userElem = $('<span class = "username">' + userName + '</span>' + '</br>');
   var messageElem = $('<span>' + message + '</span>');
   var completeMessage = $('<div class = "chat">' +'</div>');
@@ -69,18 +79,65 @@ app.addFriend = function(userName) {
 };
 
 app.handleSubmit = function () {
-  console.log("this called!")
+  var msg = {};
+  msg.username =  window.location.search.slice(10);
+  msg.text = $('.input').val();
+  msg.roomname = "lobby";
+  app.send(msg);
 };
 
 app.checkMessages = function (text) {
-  // if(!text){
-  //   return "undefined text";
-  // }
+ // <, >, ", ', `, , !, @, $, %, (, ), =, +, {, }, [, and ]
   // console.log(text)
   // var result = text;
-  // result = result.replace(/</, "h");
-  // return result;
+  // if(result === undefined){
+  //   console.log(arguments[1]);
+  //   debugger;
+  // }
+
+  // result = result.replace(/\</, "\*");
+  // result = result.replace(/\>/, "\*");
+  // result = result.replace(/\"/, "\*");
+  // result = result.replace(/\'/, "\*");
+  // result = result.replace(/\`/, "\*");
+  // result = result.replace(/\,/, "\*");
+  // result = result.replace(/\!/, "\*");
+  // result = result.replace(/@/, "\*");
+  // result = result.replace(/\$/, "\*");
+  // result = result.replace(/\%/, "\*");
+  // result = result.replace(/\(/, "\*");
+  // result = result.replace(/\)/, "\*");
+  // result = result.replace(/\=/, "\*");
+  // result = result.replace(/\+/, "\*");
+  // result = result.replace(/\{/, "\*");
+  // result = result.replace(/\}/, "\*");
+  // result = result.replace(/\[/, "\*");
+  // result = result.replace(/\]/, "\*");
+  // result = result.replace(/\&/, "\*");
+
+
+return text.replace(/[&<"']/g, function(m) {
+  console.log(m)
+    switch (m) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '"':
+        return '&quot;';
+      default:
+        return '&#039;';
+    }
+  });
+
+
+
+
+  return result;
 }
+
+app.init();
+setTimeout(app.fetch(),5000);
 
 
 
