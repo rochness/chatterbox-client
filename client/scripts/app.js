@@ -1,5 +1,7 @@
 // YOUR CODE HERE:
-var app = {};
+var app = {
+  allMessages: []
+};
 var rooms = {};
 app.init = function(){
   // $("#send").on('submit', this.handleSubmit());
@@ -7,6 +9,7 @@ app.init = function(){
     app.handleSubmit();
   });
 };
+
 
 app.send = function(message){
   $.ajax({
@@ -33,6 +36,7 @@ app.fetch = function(message){
   data: JSON.stringify(message),
   contentType: 'application/json',
   success: function (data) {
+    allMessages = data.results;
     _.each(data.results, function (item) {
       app.addMessage(item);
       if(!rooms.hasOwnProperty(item.roomname)) {
@@ -74,6 +78,19 @@ app.addRoom = function(roomName){
   $('#roomSelect').append(optionElement);
 };
 
+app.roomSelect = function(name){
+  return _.filter(allMessages, function(item){
+    return item.roomname === name;
+  })
+}
+
+$( "#roomSelect" ).change(function() {
+  var chatBoard = app.roomSelect($('#roomSelect').val());
+  $('#chats').empty();
+  _.each(chatBoard, function(item){
+    app.addMessage(item);
+  });
+});
 app.addFriend = function(userName) {
 
 };
@@ -81,8 +98,8 @@ app.addFriend = function(userName) {
 app.handleSubmit = function () {
   var msg = {};
   msg.username =  window.location.search.slice(10);
-  msg.text = $('.input').val();
-  msg.roomname = "lobby";
+  msg.text = $('#send .input').val();
+  msg.roomname =  $('#createRoom .input').val() === "" ? $('#roomSelect').val() : $('#createRoom .input').val();
   app.send(msg);
 };
 
