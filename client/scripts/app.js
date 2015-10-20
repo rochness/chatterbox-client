@@ -50,9 +50,10 @@ app.fetch = function(message){
   data: JSON.stringify(message),
   contentType: 'application/json',
   success: function (data) {
-    allMessages = data.results;
+    app.allMessages = data.results.slice();
     _.each(data.results, function (item) {
-      app.addMessage(item);
+      // console.log('app', app);
+      // app.allMessages.push(item);
       if(!rooms.hasOwnProperty(item.roomname)) {
         rooms[item.roomname] = item.roomname;
         $('#roomSelect').append('<option value =' + item.roomname + '>' + item.roomname + '</option>');
@@ -62,6 +63,8 @@ app.fetch = function(message){
       var that = this.getAttribute("data-user");
       app.addFriend(that);
     });
+    // console.log('in fetch function', app.allMessages);
+
   },
   error: function (data) {
     // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -87,6 +90,10 @@ app.addMessage = function(messageObj){
   completeMessage.attr('data-user', userName);
   completeMessage.attr('data-room', messageObj.roomname);
 
+  if(app.friends.indexOf(userName) !== -1){
+    completeMessage.addClass('friends');
+  }
+
   $('#chats').append(completeMessage);
   completeMessage.append(userElem);
   completeMessage.append(messageElem);
@@ -99,26 +106,29 @@ app.addRoom = function(roomName){
 };
 
 app.roomSelect = function(name){
-  return _.filter(allMessages, function(item){
+  return _.filter(app.allMessages, function(item){
     return item.roomname === name;
   })
 }
 
 $( "#roomSelect" ).change(function() {
-  var chatBoard = app.roomSelect($('#roomSelect').val());
-  $('#chats').empty();
-  _.each(chatBoard, function(item){
-    app.addMessage(item);
-  });
+  if($('#roomSelect').val() === "allRooms") {
+    $('#chats').empty();
+    app.fetch();
+  } else {
+    var chatBoard = app.roomSelect($('#roomSelect').val());
+    $('#chats').empty();
+    _.each(chatBoard, function(item){
+      app.addMessage(item);
+    });
+  }
 });
 
 app.addFriend = function(userName) {
   app.friends.push(userName);
-  console.log(app.friends)
-  console.log($('.chats').children())
   var chatNodes = $('#chats').children();
   for(var i = 0; i < chatNodes.length; i++) {
-    console.log(chatNodes[i])
+    // console.log(chatNodes[i])
     if(chatNodes[i].getAttribute("data-user") === userName) {
       $(chatNodes[i]).addClass('friends')
     }
@@ -142,7 +152,32 @@ app.checkMessages = function (string) {
  }
 
 app.init();
-// setInterval(function () { $('#chats').empty() ; app.fetch()},10000);
+app.fetch();
+
+app.refreshBoard = function () {
+  // debugger;
+  // app.fetch.call(this);
+app.fetch();
+  if($('#roomSelect').val() === "allRooms") {
+    _.each(app.allMessages, function (message) {
+      // console.log(app.allMessages);
+      app.addMessage(message);
+    })
+  } else {
+    var chatBoard = app.roomSelect($('#roomSelect').val());
+    // if(app.roomSelect($('#roomSelect').val() === 'TESTROOM')
+    // }
+    $('#chats').empty();
+    _.each(chatBoard, function(item){
+      app.addMessage(item);
+    });
+  }
+}
+app.refreshBoard();
+
+setInterval(function () {app.refreshBoard()}, 3000);
+// console.log(app.allMessages)
+// setInterval(function () { app.refreshBoard() },5000);
 
 
 
